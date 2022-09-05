@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/nickholmstyle/tinyapp/issues"
   },
-  "homepage": "https://github.com/nickholmstyle/tinyapp#readme"
+  "homepage": "https://github.com/nickholmstyle/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
 }
