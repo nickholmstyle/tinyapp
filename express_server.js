@@ -1,19 +1,22 @@
 
 const cookieParser = require("cookie-parser");
+const { name } = require("ejs");
 const express = require("express");
+
+//sets app as express
 const app = express();
+
+//declares the port we are using
 const PORT = 8080;
-// const cookieParser = require('cookie-parser');
-
-const generateRandomString = () => {
-  return Math.random().toString(36).slice(2, 8)
-};
 
 
+//Middleware
 
 app.use(express.urlencoded({ extended: true }));
-// app.use(cookieParser())
+app.use(cookieParser());
 app.set("view engine", "ejs");
+
+//Helper Variables
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -21,26 +24,52 @@ const urlDatabase = {
 };
 
 
+//Helper functions
+
+const generateRandomString = () => {
+  return Math.random().toString(36).slice(2, 8)
+};
+
+
+////////////GET///////////
+
+//parse through the database
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+//displays the "database" of urls. Update url or delete here. 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"],
+   };
   res.render("urls_index", templateVars);
 });
 //route to the page to add new urls
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { 
+    username: req.cookies["username"],
+   }; 
+  res.render("urls_new", templateVars);
 });
-//show the list of urls
+//show new short url , update the short url here.
 app.get("/urls/:id", (req, res) => {
-  const id = req.params.id
-  const longURL = urlDatabase[id]
-  const templateVars = { id, longURL };
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  const username = req.cookies["username"]
+  const templateVars = { id, longURL, username };
   res.render('urls_show', templateVars)
 })
 
+//redirect the short url link to the long url. Goes to website.
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id
+  const longURL = urlDatabase[id]
+  res.redirect(longURL);
+});
+
+////////////POST///////////
 
 // generate a random string and create a new entry to the database list
 app.post("/urls", (req, res) => {
@@ -50,15 +79,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
-
-//redirect the short url link to the long url. Goes to website.
-app.get("/u/:id", (req, res) => {
-  const id = req.params.id
-  const longURL = urlDatabase[id]
-  res.redirect(longURL);
-});
-
-//create form to update short url
+//form to update short url
 app.post("/urls/:id/edit", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL
   res.redirect("/urls")
@@ -72,6 +93,24 @@ app.post("/urls/:id/delete", (req, res) => {
 
 })
 
+//login
+
+app.post("/login", (req, res) => {
+  const { username } = req.body
+  res.cookie("username", username)
+  res.redirect("/urls")
+})
+
+//logout
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls")
+})
+
+/////////////////////////////////////////////////////
+
+//which port we listen to the client on
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
 });
