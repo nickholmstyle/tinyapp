@@ -3,6 +3,10 @@ const cookieParser = require("cookie-parser");
 const { name } = require("ejs");
 const express = require("express");
 
+const bcrypt = require("bcryptjs");
+// const password = "purple-monkey-dinosaur"; // found in the req.body object
+// const hashedPassword = bcrypt.hashSync(password, 10);
+
 //sets app as express
 const app = express();
 
@@ -87,8 +91,8 @@ const getUserByEmail = (email) => {
 const urlsForUser = (id, urlDatabase) => {
   let userUrls = {}
     for (let urlID in urlDatabase) {
-      console.log(urlDatabase)
-      console.log(urlID)
+      // console.log(urlDatabase)
+      // console.log(urlID)
       if (urlDatabase[urlID].userID === id) {
         userUrls[urlID] = urlDatabase[urlID].longURL
 
@@ -231,13 +235,25 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body
   const user = getUserByEmail(email)
+  console.log(user)
+  const passwordCheck = bcrypt.compareSync(password, user.hashedPassword)
   
   if (!user) {
     return res.status(401).send(`Invalid Email.`)
-  } 
-  if (user.password !== password) {
-    return res.status(401).send(`Password is incorrect.`)
+  } else if (passwordCheck) {
+    res.redirect('/urls')
+  } else {
+    res.status(401).send(`Password is incorrect`)
   }
+
+  
+
+  // if (!user) {
+  //   return res.status(401).send(`Invalid Email.`)
+  // } 
+  // if (user.password !== password) {
+  //   return res.status(401).send(`Password is incorrect.`)
+  // }
 
   res.cookie("userID", user.userID);
   return res.redirect("/urls");
@@ -257,16 +273,18 @@ app.post("/register", (req, res) => {
  
   const userID = generateRandomString();
   const {email, password} = req.body;
+
+  const hashedPassword = bcrypt.hashSync(password, 10);
   
-  if (!email || !password) {
-    res.redirect('/400')
+  if (!email || !hashedPassword) {
+    res.status(400).send(`Please re-enter credentials. Both fields must be filled`)
   }
   
   if (getUserByEmail(email)) {
-    res.redirect('/400')
+    res.status(400).send(`This password is already associated with an account.`)
   }
-  users[userID] = { userID, email, password };
-
+  users[userID] = { userID, email, hashedPassword };
+console.log(users)
   res.cookie("userID", userID);
 
   res.redirect("/urls");
