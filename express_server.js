@@ -18,13 +18,26 @@ app.set("view engine", "ejs");
 
 //Global Objects
 
+// Old DB
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
+/////
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
-const users = {}
 
+const users = {}
 
 ///EXAMPLE///////////////////
 
@@ -45,18 +58,46 @@ const users = {}
 
 //Helper functions
 
+//generate random string
 const generateRandomString = () => {
   return Math.random().toString(36).slice(2, 8)
 };
 
+//determine if the user email exists in the users database
 const getUserByEmail = (email) => {
   for (const id in users) {
+   
     if (users[id].email === email){
-      return users[id]
+      return users[id];
     }
   }
-  return null
+  return null;
+};
+
+//returns the URLS where the userID is equal to the id of the currently logged in user
+//loop through the database keys
+// change the structure of the database to include all the users who have a particular short url
+// append a user an object to key of the short url
+// userDB = {
+  //ede4fr: {
+      // longURL: www.blahblah.com
+      // userID: req.cookies["userID"]
+  //}
+
+const urlsForUser = (id, urlDatabase) => {
+  let userUrls = {}
+    for (let urlID in urlDatabase) {
+      console.log(urlDatabase)
+      console.log(urlID)
+      if (urlDatabase[urlID].userID === id) {
+        userUrls[urlID] = urlDatabase[urlID].longURL
+
+      }
+
+    }
+  return userUrls;
 }
+
 
 
 ////////////GET///////////
@@ -66,22 +107,35 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+
+
 //displays the "database" of urls. Update url or delete here. 
 app.get("/urls", (req, res) => {
   
   const userID = req.cookies["userID"]
   const user = users[userID]
+  const filteredDB = urlsForUser(userID, urlDatabase)
+  console.log(filteredDB)
+  console.log(userID)
+  
   const templateVars = { 
-    urls: urlDatabase,
+    urls: filteredDB,
     user
    };
-  res.render("urls_index", templateVars);
+ 
+   res.render("urls_index", templateVars);
 });
 
 //route to the page to add new urls
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies["userID"]
   const user = users[userID]
+  // const currentUser = users[req.cookies["userID"]];
+  // if (!currentUser) {
+  if(!user) {
+    res.redirect('/login');
+    return
+  }
   const templateVars = { 
     user
    }; 
@@ -102,6 +156,9 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
+  if (!longURL) {
+    return res.status(401).send(`URL does not exist`)
+  }
   res.redirect(longURL);
 });
 
@@ -109,14 +166,21 @@ app.get("/u/:id", (req, res) => {
 app.get("/register", (req, res) => {
   const userID = req.cookies["userID"]
   const user = users[userID]
+  if (user) {
+    res.redirect('/urls')
+  }
   const templateVars = { user };
   res.render("urls_register", templateVars);
 });
-
+//Login Page
 app.get("/login", (req, res) => {
-  const userID = req.cookies["userID"]
-  const user = users[userID];
-  const templateVars = { user }
+  const currentUser = users[req.cookies["userID"]];
+  if (currentUser) {
+    res.redirect('/urls');
+    return
+  }
+
+  const templateVars = { user: currentUser }
   res.render("urls_login", templateVars)
 });
 
@@ -124,20 +188,38 @@ app.get("/login", (req, res) => {
 
 // generate a random string and create a new entry to the database list
 app.post("/urls", (req, res) => {
+  const currentUser = users[req.cookies["userID"]];
+  
+  if (!currentUser) {
+    return res.redirect('/401').send(`Please Login or create a new account.`)
+  }
+  
   const id = generateRandomString();
   longURL = req.body.longURL;
-  urlDatabase[id] = longURL;
+  urlDatabase[id] = {longURL, userID: req.cookies["userID"]};
   res.redirect(`/urls/${id}`);
 });
 
 //form to update short url
 app.post("/urls/:id/edit", (req, res) => {
+  const currentUser = users[req.cookies["userID"]];
+  
+  if (!currentUser) {
+    return res.redirect('/401').send(`Please login or create a new account.`)
+  }
+  
   urlDatabase[req.params.id] = req.body.longURL;
   res.redirect("/urls");
 });
 
 //delete url
 app.post("/urls/:id/delete", (req, res) => {
+  const currentUser = users[req.cookies["userID"]];
+  
+  if (!currentUser) {
+    return res.redirect('/401').send(`Please login or create a new account`)
+  }
+  
   const {id} = req.params;
   delete urlDatabase[id];
   res.redirect('/urls');
@@ -149,14 +231,14 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body
   const user = getUserByEmail(email)
+  
   if (!user) {
-    return res.send(`Invalid Email.`)
+    return res.status(401).send(`Invalid Email.`)
   } 
   if (user.password !== password) {
-    return res.send(`Password is incorrect.`)
+    return res.status(401).send(`Password is incorrect.`)
   }
 
-  
   res.cookie("userID", user.userID);
   return res.redirect("/urls");
  
@@ -171,14 +253,10 @@ app.post("/logout", (req, res) => {
 
 //handles the registration form data
 
-
 app.post("/register", (req, res) => {
  
   const userID = generateRandomString();
   const {email, password} = req.body;
-  // const password = req.body.password;
-  
-  // console.log(users)
   
   if (!email || !password) {
     res.redirect('/400')
