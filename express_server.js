@@ -49,6 +49,14 @@ const generateRandomString = () => {
   return Math.random().toString(36).slice(2, 8)
 };
 
+const getUserByEmail = (email) => {
+  for (const id in users) {
+    if (users[id].email === email){
+      return users[id]
+    }
+  }
+  return null
+}
 
 
 ////////////GET///////////
@@ -139,29 +147,29 @@ app.post("/urls/:id/delete", (req, res) => {
 //login
 
 app.post("/login", (req, res) => {
-  const { username } = req.body;
-  res.cookie("username", username);
-  res.redirect("/urls");
-})
+  const { email, password } = req.body
+  const user = getUserByEmail(email)
+  if (!user) {
+    return res.send(`Invalid Email.`)
+  } 
+  if (user.password !== password) {
+    return res.send(`Password is incorrect.`)
+  }
+
+  
+  res.cookie("userID", user.userID);
+  return res.redirect("/urls");
+ 
+});
 
 //logout
 
 app.post("/logout", (req, res) => {
   res.clearCookie("userID");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 //handles the registration form data
-
-const getUserByEmail = (email) => {
-  for (const id in users) {
-    if (users[id].email === email){
-      return users[id]
-    }
-  }
-  return null
-}
-
 
 
 app.post("/register", (req, res) => {
