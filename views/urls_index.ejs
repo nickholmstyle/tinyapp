@@ -22,6 +22,7 @@
     </header>
     <main style="margin: 1em;">
       <h3>My URLs</h3>
+      <h5><a href='/urls/new'>Add to List</a></a></h5>
       <table class="table">
         <thead>
           <tr>
@@ -38,6 +39,7 @@
               <td><form method="POST" action="/urls/<%= id %>/delete"><input type="submit" value="delete"></form></td>
             </tr>
           <% } %>
+              
         </tbody>
       </table>
     </main>
