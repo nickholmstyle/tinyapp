@@ -7,8 +7,8 @@ const generateRandomString = () => {
 
 const getUserByEmail = (email, users) => {
   for (const id in users) {
-    if (users[id].email === email){
-      let user = users[id]
+    if (users[id].email === email) {
+      let user = users[id];
       return user;
     }
   }
@@ -16,14 +16,13 @@ const getUserByEmail = (email, users) => {
 };
 
 const urlsForUser = (id, urlDatabase) => {
-  let userUrls = {}
-    for (let urlID in urlDatabase) {
-      if (urlDatabase[urlID].userID === id) {
-        userUrls[urlID] = urlDatabase[urlID].longURL
-      }
+  let userUrls = {};
+  for (let urlID in urlDatabase) {
+    if (urlDatabase[urlID].userID === id) {
+      userUrls[urlID] = urlDatabase[urlID].longURL;
     }
+  }
   return userUrls;
 };
 
-
-module.exports = { generateRandomString, getUserByEmail, urlsForUser }
+module.exports = { generateRandomString, getUserByEmail, urlsForUser };
