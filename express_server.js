@@ -129,7 +129,6 @@ app.get("/u/:id", (req, res) => {
 
 ///Registration page. Only  non existing users may register. Upon registration the new user is reidrected to the urls page.
 app.get("/register", (req, res) => {
-  
   const userID = req.session.userID;
   const user = users[userID];
   if (user) {
@@ -181,11 +180,11 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (!email || !hashedPassword) {
-    res.status(400).send(`Please re-enter credentials. Both fields must be filled`);
+    res.status(400).send(`Please re-enter credentials. Both fields must be filled. Please <a href='/register'>try again.</a>`);
   }
   
   if (getUserByEmail(email)) {
-    res.send(`Sorry, we were unable to log you in. Please ensure the information is correct <a href='/login'>here.</a>`);
+    res.send(`Sorry, we were unable to log you in. Please ensure the information is correct <a href='/register'>here.</a>`);
   }
   
   users[userID] = { userID, email, hashedPassword };
@@ -253,12 +252,13 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect('/urls');
 });
 
-
+///Logs user out and clears cookies
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
-///Accepets requests from the client.
+
+///Accepts requests from the client.
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
