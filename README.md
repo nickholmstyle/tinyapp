@@ -5,7 +5,7 @@ This is a project I worked on for Lighthouse Labs to learn back end development 
 
 ## Final Product
 
-!["screenshot login"]()
+!["screenshot login"](https://github.com/nickholmstyle/tinyapp/blob/master/docs/Screen%20Shot%202022-09-12%20at%201.01.10%20PM.png?raw=true)
 !["screenshot urls"](https://raw.githubusercontent.com/nickholmstyle/tinyapp/c1f827937b219275d8ef9454096c6372117a1626/docs/Screen%20Shot%202022-09-12%20at%201.28.03%20PM.png)
 
 ## Dependencies
