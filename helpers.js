@@ -8,8 +8,7 @@ const generateRandomString = () => {
 const getUserByEmail = (email, users) => {
   for (const id in users) {
     if (users[id].email === email) {
-      let user = users[id];
-      return user;
+      return users[id];
     }
   }
   return null;

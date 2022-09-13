@@ -119,7 +119,7 @@ app.get("/u/:id", (req, res) => {
 
   //Validates that the user owns an id that exists in the database
   if (!urlsForUser(id, urlDatabase)) {
-    res.send(`url not found! Please <a href='/urls'>try again.</a>`);
+    return res.send(`url not found! Please <a href='/urls'>try again.</a>`);
   }
 
   const longURL = urlDatabase[id].longURL;
@@ -155,14 +155,16 @@ app.get("/login", (req, res) => {
 ///Login post: Requires encrypted password and for the user to exist in the server users database.
 ///Throws an error and provides a link to try again or opt to register back on the login page.
 app.post("/login", (req, res) => {
+  
   const { email, password } = req.body;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   
   if (!user) {
     return res.send(`Sorry, we were unable to log you in. Please ensure the information is correct <a href='/login'>here.</a>`);
   }
 
   const passwordCheck = bcrypt.compareSync(password, user.hashedPassword);
+  
   if (passwordCheck) {
     req.session.userID = user.userID;
     return res.redirect('/urls');
@@ -177,16 +179,17 @@ app.post("/register", (req, res) => {
  
   const userID = generateRandomString();
   const {email, password} = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).send(`Please re-enter credentials. Both fields must be filled. Please <a href='/register'>try again.</a>`);
+  }
+  
+  if (getUserByEmail(email, users)) {
+  
+    return res.send(`Sorry, we are unable to register your account. Please ensure the information is correct <a href='/register'>here.</a>`);
+  }
+  
   const hashedPassword = bcrypt.hashSync(password, 10);
-
-  if (!email || !hashedPassword) {
-    res.status(400).send(`Please re-enter credentials. Both fields must be filled. Please <a href='/register'>try again.</a>`);
-  }
-  
-  if (getUserByEmail(email)) {
-    res.send(`Sorry, we were unable to log you in. Please ensure the information is correct <a href='/register'>here.</a>`);
-  }
-  
   users[userID] = { userID, email, hashedPassword };
   req.session.userID = userID;
   
